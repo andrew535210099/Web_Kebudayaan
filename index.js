@@ -5,6 +5,7 @@ const ejs = require("ejs");
 const mongoose = require("mongoose");
 const bcrypt = require('bcrypt');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const jwt = require("jsonwebtoken");
 var datetime = new Date();
 const JWT_SECRET = "hvdvay6ert72839289()aiyg8t87qt72393293883uhefiuh78ttq3ifi78272jbkj?[]]pou89ywe";
@@ -13,14 +14,13 @@ const app = express();
 app.use(express.json());
 
 mongoose.connect(
-  "mongodb+srv://andrewpurba54:andrewacp1688@cluster1.3idadyo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1",
-  { useNewUrlParser: true, useUnifiedTopology: true }
+  "mongodb+srv://andrewpurba54:andrewacp1688@cluster1.3idadyo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1"
 );
 
 const notesSchema = new mongoose.Schema({
   username: { type: String, unique: true },
   email: { type: String, unique: true },
-  password: String,
+  password: String, 
 }, {
   collection: "UserInfo",
 });
@@ -39,8 +39,9 @@ app.use(express.static(path.join(__dirname, "public", "")));
 // Configure session middleware
 app.use(session({
   secret: 'your-secret-key', // Replace with a strong secret key
-  resave: false,
-  saveUninitialized: true,
+  resave: false,  
+  saveUninitialized: false,
+  store: MongoStore.create({ mongoUrl: 'mongodb+srv://andrewpurba54:andrewacp1688@cluster1.3idadyo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1' }),
   cookie: { secure: false } // Set to true if using HTTPS
 }));
 
@@ -129,7 +130,7 @@ app.post("/signup", async (req, res) => {
   const encryptedPassword = await bcrypt.hash(password, 10);
 
   if (!username || !email || !password || !confirm_password) {
-    return res.status(400).json({ message: 'All fie lds are required' });
+    return res.status(400).json({ message: 'All fields are required' });
   }
 
   if (password !== confirm_password) {
