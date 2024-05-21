@@ -57,52 +57,31 @@ app.get("/", async (req, res) => {
   }
 });
 
-// app.post("/", async (req, res) => {
-//   try {
-//     const { email, password } = req.body;
-//     const user = await Note.findOne({ email });
+app.post("/", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await Note.findOne({ email });
 
-//     if (!user) {
-//       console.log('User not found');
-//       return res.status(401).json({ message: 'Invalid email or password' });
-//     }
+    if (!user) {
+      console.log('User not found');
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
 
-//     if (await bcrypt.compare(password, user.password)) {
-//       console.log(user.email + ' login at ' + datetime);
+    if (await bcrypt.compare(password, user.password)) {
+      console.log(user.email + ' login at ' + datetime);
       
-//       // Store user data in the session
-//       req.session.user = user;
-//       return res.json({ message: 'Login successful' });
-//     }
+      // Store user data in the session
+      req.session.user = user;
+      return res.json({ message: 'Login successful' });
+    }
 
-//     console.log('Invalid Password');
-//     return res.status(401).json({ message: 'Invalid email or password' });
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({ message: 'Internal server error' });
-//   }
-// });
-
-app.post("/", async function(req, res) {
-  const { email, password } = req.body;
-  const user = await Note.findOne({ email });
-  if (!user) {
-      res.redirect('/');
-      return console.log('User not found');
+    console.log('Invalid Password');
+    return res.status(401).json({ message: 'Invalid email or password' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
-  if (await bcrypt.compare(password, user.password)) {
-      const token = jwt.sign({ email: user.email }, JWT_SECRET);
-      if (res.status(201)) {
-          res.redirect('/homepage');
-          console.log( user.email + 'login at' + datetime)
-          return console.log('Welcome back', email)
-      } else {
-          return res.json({ error: "error" });
-      }
-  }
-  console.log('Invalid Password')
-  res.redirect('/');
-})
+});
 
 // Logout route
 app.post('/logout', (req, res) => {
@@ -114,36 +93,24 @@ app.post('/logout', (req, res) => {
   });
 });
 
-// app.get('/homepage', async (req, res) => {
-//   try {
-//     // Retrieve user data from the session
-//     const user = req.session.user;
-
-//     if (!user) { 
-//       res.redirect('/')
-//       return res.status(403).json({ message: 'Not authenticated' });
-//     }
-
-//     const filePath = path.join(__dirname, 'views', 'pages', 'index.ejs');
-//     const html = await ejs.renderFile(filePath, { user });
-//     res.send(html);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: 'An error occurred. Please try again later.' });
-//   }
-// });
-
 app.get('/homepage', async (req, res) => {
   try {
+    // Retrieve user data from the session
+    const user = req.session.user;
+
+    if (!user) { 
+      res.redirect('/')
+      return res.status(403).json({ message: 'Not authenticated' });
+    }
+
     const filePath = path.join(__dirname, 'views', 'pages', 'index.ejs');
-    const html = await ejs.renderFile(filePath, { /* data to pass to the EJS template */ });
+    const html = await ejs.renderFile(filePath, { user });
     res.send(html);
   } catch (error) {
     console.error(error);
-    res.status(500).send('Internal Server Error');
+    res.status(500).json({ message: 'An error occurred. Please try again later.' });
   }
 });
-
 
 app.get('/signup', async (req, res) => {
   try {
@@ -156,89 +123,43 @@ app.get('/signup', async (req, res) => {
   }
 });
 
-app.post("/signup", async function(req, res) {
-  const { email, password, confirm_password, username } = req.body;
+app.post("/signup", async (req, res) => {
+  const { username, email, password, confirm_password } = req.body;
   const encryptedPassword = await bcrypt.hash(password, 10);
-  if(username === "" && !username) {
-      return console.log('Username has not been filled')
+
+  if (!username || !email || !password || !confirm_password) {
+    return res.status(400).json({ message: 'All fie lds are required' });
   }
-  if(email === "" && !email) {
-      return console.log('Email has not been filled')
+
+  if (password !== confirm_password) {
+    return res.status(400).json({ message: 'Passwords do not match' });
   }
-  if (password === "" && !password) {
-      return console.log('Password has not been filled')
-  } else if (confirm_password === "" && !confirm_password ){
-      return console.log('Confirm Password has not been filled')
-  }
-  else {
-  if(password == confirm_password){
+
   try {
-      const oldUser = await Note.findOne({ email });
-      const oldUsername = await Note.findOne({ username });
-      if (oldUser) {
-          res.redirect('/signup');
-          return console.log('Sorry, this ' + req.body.email + ' has been exists');
+    const existingUser = await Note.findOne({ $or: [{ email: email }, { username: username }] });
+
+    if (existingUser) {
+      if (existingUser.email === email) {
+        return res.status(400).json({ message: 'Email already exists' });
+      } else {
+        return res.status(400).json({ message: 'Username already exists' });
       }
-      if (oldUsername) {
-          res.redirect('/signup');
-          return console.log('Sorry, this ' + username + ' has been exists');
-      }
-      await Note.create({
-          username,
-          email,
-          password: encryptedPassword,
+    }
+
+    await Note.create({
+      username,
+      email,
+      password: encryptedPassword,
+    });
+
+    console.log('Email ' + email + ' has been successfully created');
+    console.log('Username ' + username + ' has been successfully created');
+    res.status(200).json({ message: 'Sign up successful' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({message: 'Internal server error' });
   }
-  );
-  res.redirect('/')
-  console.log('Email ' + email + ' has been successfully made ')
-  console.log(username + ' has been successfully made');
-} catch (error) {
-  res.send({ status: "error" });
-}
-} 
-else {
-  console.log('Wrong password');
-  res.redirect('/signup');
-}}
-})
-
-// app.post("/signup", async (req, res) => {
-//   const { username, email, password, confirm_password } = req.body;
-//   const encryptedPassword = await bcrypt.hash(password, 10);
-
-//   if (!username || !email || !password || !confirm_password) {
-//     return res.status(400).json({ message: 'All fie lds are required' });
-//   }
-
-//   if (password !== confirm_password) {
-//     return res.status(400).json({ message: 'Passwords do not match' });
-//   }
-
-//   try {
-//     const existingUser = await Note.findOne({ $or: [{ email: email }, { username: username }] });
-
-//     if (existingUser) {
-//       if (existingUser.email === email) {
-//         return res.status(400).json({ message: 'Email already exists' });
-//       } else {
-//         return res.status(400).json({ message: 'Username already exists' });
-//       }
-//     }
-
-//     await Note.create({
-//       username,
-//       email,
-//       password: encryptedPassword,
-//     });
-
-//     console.log('Email ' + email + ' has been successfully created');
-//     console.log('Username ' + username + ' has been successfully created');
-//     res.status(200).json({ message: 'Sign up successful' });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({message: 'Internal server error' });
-//   }
-// });
+});
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

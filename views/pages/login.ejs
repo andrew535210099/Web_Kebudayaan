@@ -11,7 +11,7 @@
     <h1>Login - Cultural Website</h1>
     <h3>By: Tiara Kinar Nareswari</h3>
     <form class="login" method="post" action="/">
-      <label for="email">Email:</label>
+      <label for="email">Username:</label>
       <input type="text" id="email" name="email" placeholder="Enter your Email" required>
       <label for="password">Password:</label>
       <input type="password" id="password" name="password" placeholder="Enter your Password" required>
@@ -21,6 +21,47 @@
     </form>
     <p>Not registered? <a href="signup" style="text-decoration: none;">Create an account</a></p>
   </div>
- 
+  <script>
+    async function submitLogin(event) {
+      event.preventDefault(); // Prevent default form submission
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      console.log(email)
+      console.log(password)
+      const data1 = {
+        email: email,
+        password: password
+      };
+
+      try {
+        
+        const response = await fetch("/", {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data1) 
+          });
+          
+        const data = await response.json(); // Parse the JSON response
+        console.log('responsenya : ', response)
+
+        if (data.message === 'Login successful') {
+          // Handle successful login (e.g., redirect to a secure page)
+          window.location.href = '/homepage';
+          // ... redirect or other actions
+        } else {
+          alert(data.message); // Display error message from backend
+        }
+      } catch (error) {
+        console.error(error);
+        alert("An error occurred. Please try again later.");
+      }
+    }
+
+    const form = document.querySelector('.login');
+    form.addEventListener('submit', submitLogin);
+  </script>
 </body>
 </html>
