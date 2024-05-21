@@ -53,7 +53,7 @@ app.get("/", async (req, res) => {
     res.send(html);
   } catch (error) {
     console.error(error);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json("Internal Server Error");
   }
 });
 
@@ -61,11 +61,10 @@ app.post("/", async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await Note.findOne({ email });
-    console.log(user);
 
     if (!user) {
       console.log('User not found');
-      return res.status(401).send({ message: 'Invalid email or password' });
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     if (await bcrypt.compare(password, user.password)) {
@@ -73,14 +72,14 @@ app.post("/", async (req, res) => {
       
       // Store user data in the session
       req.session.user = user;
-      return res.send({ message: 'Login successful' });
+      return res.json({ message: 'Login successful' });
     }
 
     console.log('Invalid Password');
-    return res.status(401).send({ message: 'Invalid email or password' });
+    return res.status(401).json({ message: 'Invalid email or password' });
   } catch (error) {
     console.error(error);
-    return res.status(500).send({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -88,7 +87,7 @@ app.post("/", async (req, res) => {
 app.post('/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
-      return res.status(500).send({ message: 'Failed to log out' });
+      return res.status(500).json({ message: 'Failed to log out' });
     }
     res.redirect('/');
   });
@@ -101,15 +100,15 @@ app.get('/homepage', async (req, res) => {
 
     if (!user) { 
       res.redirect('/')
-      return res.status(403).send({ message: 'Not authenticated' });
+      return res.status(403).json({ message: 'Not authenticated' });
     }
 
     const filePath = path.join(__dirname, 'views', 'pages', 'index.ejs');
     const html = await ejs.renderFile(filePath, { user });
-    res.send(html); 
+    res.send(html);
   } catch (error) {
     console.error(error);
-    res.status(500).send({ message: 'An error occurred. Please try again later.' });
+    res.status(500).json({ message: 'An error occurred. Please try again later.' });
   }
 });
 
@@ -120,7 +119,7 @@ app.get('/signup', async (req, res) => {
     res.send(html);
   } catch (error) {
     console.error(error);
-    res.status(500).send('Internal Server Error');
+    res.status(500).json('Internal Server Error');
   }
 });
 
@@ -129,11 +128,11 @@ app.post("/signup", async (req, res) => {
   const encryptedPassword = await bcrypt.hash(password, 10);
 
   if (!username || !email || !password || !confirm_password) {
-    return res.status(400).send({ message: 'All fie lds are required' });
+    return res.status(400).json({ message: 'All fie lds are required' });
   }
 
   if (password !== confirm_password) {
-    return res.status(400).send({ message: 'Passwords do not match' });
+    return res.status(400).json({ message: 'Passwords do not match' });
   }
 
   try {
@@ -141,9 +140,9 @@ app.post("/signup", async (req, res) => {
 
     if (existingUser) {
       if (existingUser.email === email) {
-        return res.status(400).send({ message: 'Email already exists' });
+        return res.status(400).json({ message: 'Email already exists' });
       } else {
-        return res.status(400).send({ message: 'Username already exists' });
+        return res.status(400).json({ message: 'Username already exists' });
       }
     }
 
@@ -155,10 +154,10 @@ app.post("/signup", async (req, res) => {
 
     console.log('Email ' + email + ' has been successfully created');
     console.log('Username ' + username + ' has been successfully created');
-    res.status(200).send({ message: 'Sign up successful' });
+    res.status(200).json({ message: 'Sign up successful' });
   } catch (error) {
     console.error(error);
-    res.status(500).send({ message: 'Internal server error' });
+    res.status(500).json({message: 'Internal server error' });
   }
 });
 
