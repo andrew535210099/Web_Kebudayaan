@@ -61,6 +61,7 @@ app.post("/", async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await Note.findOne({ email });
+    console.log(user);
 
     if (!user) {
       console.log('User not found');
