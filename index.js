@@ -58,10 +58,11 @@ app.get("/", async (req, res) => {
 });
 
 app.post("/", async (req, res) => {
+  console.log('masuk sini kok')
   try {
     const { email, password } = req.body;
     const user = await Note.findOne({ email });
-
+    console.log('checkpoint sini')
     if (!user) {
       console.log('User not found');
       return res.status(401).json({ message: 'Invalid email or password' });
