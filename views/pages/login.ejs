@@ -45,6 +45,7 @@
           });
           
         const data = await response.json(); // Parse the JSON response
+        console.log('responsenya : ', response)
 
         if (data.message === 'Login successful') {
           // Handle successful login (e.g., redirect to a secure page)
